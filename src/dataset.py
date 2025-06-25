@@ -39,7 +39,9 @@ def get_class_labels() -> typing.Tuple[list]:
     return [i for i in range(len(class_names))], class_names
 
 
-def count_label_instances(labels, cls_idx) -> tuple:
+def count_label_instances(
+    labels: typing.List[Path], cls_idx: typing.List[int]
+) -> tuple:
     index = [label.stem for label in labels]
     labels_df = pd.DataFrame([], columns=cls_idx, index=index)
 
