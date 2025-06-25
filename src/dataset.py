@@ -1,6 +1,7 @@
 import collections
 import datetime
 import shutil
+import typing
 import yaml
 from pathlib import Path
 
@@ -19,7 +20,7 @@ TEST_IMAGES_DIR = DATASETS_DIR / "images" / "test"
 SPLITS = 7
 
 
-def create_dataset_directories():
+def create_dataset_directories() -> None:
     for DIR in [TRAIN_IMAGES_DIR, TEST_IMAGES_DIR, DATASETS_DIR]:
         if DIR.exists():
             shutil.rmtree(DIR)
@@ -32,13 +33,13 @@ def get_labels() -> list:
     return labels
 
 
-def get_class_labels():
+def get_class_labels() -> typing.Tuple[list]:
     train_df = pd.read_csv("data/Train.csv")
     class_names = sorted(train_df["class"].unique().tolist())
     return [i for i in range(len(class_names))], class_names
 
 
-def count_label_instances(labels, cls_idx):
+def count_label_instances(labels, cls_idx) -> tuple:
     index = [label.stem for label in labels]
     labels_df = pd.DataFrame([], columns=cls_idx, index=index)
 
@@ -77,7 +78,7 @@ def split_data(labels_df: pd.DataFrame) -> list:
     return kfolds, train_labels_df, valid_labels_df
 
 
-def get_folds_df(kfolds, index, labels_df):
+def get_folds_df(kfolds, index, labels_df) -> pd.DataFrame:
     folds = [f"split_{n}" for n in range(1, SPLITS + 1)]
     folds_df = pd.DataFrame(index=index, columns=folds)
 
@@ -87,7 +88,7 @@ def get_folds_df(kfolds, index, labels_df):
     return folds_df
 
 
-def get_data_folds():
+def get_data_folds() -> tuple:
     labels = get_labels()
     cls_idx, classes = get_class_labels()
     labels_df, index = count_label_instances(labels, cls_idx)
@@ -105,7 +106,7 @@ def get_data_folds():
     )
 
 
-def create_yml_directories(folds_df, classes):
+def create_yml_directories(folds_df, classes) -> tuple:
     images = sorted(DATASETS_DIR.rglob("*images/train/*"))
     sorted(images)
 
@@ -142,7 +143,7 @@ def create_yml_directories(folds_df, classes):
     return images, save_path, ds_yamls
 
 
-def load_image(filepath):
+def load_image(filepath) -> np.array:
     image = Image.open(filepath)
 
     for flag in ExifTags.TAGS.keys():
@@ -163,7 +164,7 @@ def load_image(filepath):
     return image
 
 
-def copy_validation_data(images, labels, validation_df, save_path):
+def copy_validation_data(images, labels, validation_df, save_path) -> None:
     for image, label in zip(images, labels):
         if image.stem not in validation_df.index:
             continue
