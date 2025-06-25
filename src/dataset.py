@@ -65,17 +65,6 @@ def split_data(labels_df: pd.DataFrame) -> list:
     )
     train_labels_df = labels_df.copy()
     valid_labels_df = labels_df[labels_df["Image_ID"].isin(val_names)]
-    boxes_summary_df = pd.read_csv("analysis/overall_train_with_box_sizes.csv")
-    boxes_summary_df = boxes_summary_df.fillna("")
-    boxes_summary_df = boxes_summary_df[["Image_ID", "day", "hour", "camera_model"]]
-    boxes_summary_df["Image_ID"] = boxes_summary_df["Image_ID"].str.split(".").str[0]
-    for col in ["day", "hour", "camera_model"]:
-        train_labels_df[col] = train_labels_df.apply(
-            lambda row: boxes_summary_df[
-                boxes_summary_df["Image_ID"] == row["Image_ID"]
-            ].iloc[0][col],
-            axis=1,
-        )
     train_labels_df["class"] = np.where(
         train_labels_df[0] > 0, 0, np.where(train_labels_df[1] > 0, 1, 2)
     )
