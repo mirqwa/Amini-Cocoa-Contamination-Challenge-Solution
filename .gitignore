@@ -1,2 +1,4 @@
 data/dataset.zip
 data/dataset_cross_validation/*
+data/Test.csv
+data/Train.csv
