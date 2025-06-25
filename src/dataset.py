@@ -32,6 +32,27 @@ def get_labels() -> list:
     return labels
 
 
+def create_yaml_file(train):
+    # Create a data.yaml file required by yolo
+    class_names = sorted(train["class"].unique().tolist())
+    num_classes = len(class_names)
+    class_weights = get_class_weights(class_names, get_percentages(train))
+
+    data_yaml = {
+        "path": str(DATASETS_DIR.absolute()),
+        "train": str(TRAIN_IMAGES_DIR.absolute()),
+        "val": str(VAL_IMAGES_DIR.absolute()),
+        "test": str(TEST_IMAGES_DIR.absolute()),
+        "nc": num_classes,
+        "names": class_names,
+        "weights": class_weights,
+    }
+
+    yaml_path = "data.yaml"
+    with open(yaml_path, "w") as file:
+        yaml.dump(data_yaml, file, default_flow_style=False)
+
+
 def get_class_labels():
     yaml_file = "data.yaml"
     with open(yaml_file, "r", encoding="utf8") as y:
