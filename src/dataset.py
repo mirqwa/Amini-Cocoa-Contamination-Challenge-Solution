@@ -80,7 +80,9 @@ def split_data(labels_df: pd.DataFrame) -> list:
     return kfolds, train_labels_df, valid_labels_df
 
 
-def get_folds_df(kfolds, index, labels_df) -> pd.DataFrame:
+def get_folds_df(
+    kfolds: typing.List[np.ndarray], index: pd.DataFrame.index, labels_df: pd.DataFrame
+) -> pd.DataFrame:
     folds = [f"split_{n}" for n in range(1, SPLITS + 1)]
     folds_df = pd.DataFrame(index=index, columns=folds)
 
@@ -108,7 +110,7 @@ def get_data_folds() -> tuple:
     )
 
 
-def create_yml_directories(folds_df, classes) -> tuple:
+def create_yml_directories(folds_df: pd.DataFrame, classes: typing.List[str]) -> tuple:
     images = sorted(DATASETS_DIR.rglob("*images/train/*"))
     sorted(images)
 
@@ -145,7 +147,7 @@ def create_yml_directories(folds_df, classes) -> tuple:
     return images, save_path, ds_yamls
 
 
-def load_image(filepath) -> np.array:
+def load_image(filepath: Path) -> np.array:
     image = Image.open(filepath)
 
     for flag in ExifTags.TAGS.keys():
@@ -166,7 +168,12 @@ def load_image(filepath) -> np.array:
     return image
 
 
-def copy_validation_data(images, labels, validation_df, save_path) -> None:
+def copy_validation_data(
+    images: typing.List[Path],
+    labels: typing.List[Path],
+    validation_df: pd.DataFrame,
+    save_path: Path,
+) -> None:
     for image, label in zip(images, labels):
         if image.stem not in validation_df.index:
             continue
