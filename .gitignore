@@ -3,3 +3,4 @@ data/dataset_cross_validation/*
 data/Test.csv
 data/Train.csv
 notebooks/.ipynb_checkpoints/*
+src/__pycache__/*
