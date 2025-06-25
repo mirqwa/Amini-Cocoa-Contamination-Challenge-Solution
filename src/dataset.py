@@ -184,23 +184,3 @@ def copy_validation_data(
         img = load_image(image)
         img.save(img_to_path / image.name)
         shutil.copy(label, lbl_to_path / label.name)
-
-
-def main():
-    create_dataset_directories()
-    (
-        labels,
-        classes,
-        kfolds,
-        labels_df,
-        labels_df_with_counts,
-        cls_idx,
-        folds_df,
-        valid_labels_df,
-    ) = get_data_folds()
-    images, save_path, ds_yamls = create_yml_directories(folds_df, classes)
-    copy_validation_data(images, labels, valid_labels_df, save_path)
-
-
-if __name__ == "__main__":
-    main()
