@@ -1,7 +1,11 @@
+import collections
 import shutil
+import yaml
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
+from sklearn import model_selection
 
 
 INPUT_DATA_DIR = Path("data")
@@ -9,6 +13,7 @@ DATASETS_DIR = Path("data/dataset_cross_validation")
 TRAIN_IMAGES_DIR = DATASETS_DIR / "images" / "train"
 TRAIN_LABELS_DIR = DATASETS_DIR / "labels" / "train"
 TEST_IMAGES_DIR = DATASETS_DIR / "images" / "test"
+SPLITS = 7
 
 
 def create_dataset_directories():
@@ -17,6 +22,96 @@ def create_dataset_directories():
             shutil.rmtree(DIR)
         DIR.mkdir(parents=True, exist_ok=True)
     shutil.unpack_archive(INPUT_DATA_DIR / "dataset.zip", DATASETS_DIR)
+
+
+def get_labels() -> list:
+    labels = sorted(DATASETS_DIR.rglob("*labels/*/*.txt"))
+    return labels
+
+
+def get_class_labels():
+    yaml_file = "data.yaml"
+    with open(yaml_file, "r", encoding="utf8") as y:
+        classes = yaml.safe_load(y)["names"]
+    return [i for i in range(len(classes))], classes
+
+
+def count_label_instances(labels, cls_idx):
+    index = [label.stem for label in labels]
+    labels_df = pd.DataFrame([], columns=cls_idx, index=index)
+
+    for label in labels:
+        lbl_counter = collections.Counter()
+
+        with open(label, "r") as lf:
+            lines = lf.readlines()
+
+        for line in lines:
+            # classes for YOLO label uses integer at first position of each line
+            lbl_counter[int(line.split(" ")[0])] += 1
+
+        labels_df.loc[label.stem] = lbl_counter
+
+    labels_df = labels_df.fillna(0.0)  # replace `nan` values with `0.0`
+    return labels_df, index
+
+
+def split_data(labels_df: pd.DataFrame) -> list:
+    labels_df["Image_ID"] = labels_df.index
+    train_names, val_names = model_selection.train_test_split(
+        labels_df["Image_ID"].unique(), test_size=0.1, random_state=42
+    )
+    train_labels_df = labels_df.copy()
+    valid_labels_df = labels_df[labels_df["Image_ID"].isin(val_names)]
+    boxes_summary_df = pd.read_csv("analysis/overall_train_with_box_sizes.csv")
+    boxes_summary_df = boxes_summary_df.fillna("")
+    boxes_summary_df = boxes_summary_df[["Image_ID", "day", "hour", "camera_model"]]
+    boxes_summary_df["Image_ID"] = boxes_summary_df["Image_ID"].str.split(".").str[0]
+    for col in ["day", "hour", "camera_model"]:
+        train_labels_df[col] = train_labels_df.apply(
+            lambda row: boxes_summary_df[
+                boxes_summary_df["Image_ID"] == row["Image_ID"]
+            ].iloc[0][col],
+            axis=1,
+        )
+    train_labels_df["class"] = np.where(
+        train_labels_df[0] > 0, 0, np.where(train_labels_df[1] > 0, 1, 2)
+    )
+    train_labels_df["object_count"] = train_labels_df[[0, 1, 2]].sum(axis=1)
+    train_labels_df["stratify_label"] = np.where(
+        train_labels_df["object_count"] > 4, 5, train_labels_df["object_count"]
+    )
+    skf = model_selection.StratifiedKFold(n_splits=SPLITS, shuffle=True, random_state=0)
+    kfolds = list(skf.split(train_labels_df, train_labels_df[["stratify_label"]]))
+    return kfolds, train_labels_df, valid_labels_df
+
+
+def get_folds_df(kfolds, index, labels_df):
+    folds = [f"split_{n}" for n in range(1, SPLITS + 1)]
+    folds_df = pd.DataFrame(index=index, columns=folds)
+
+    for i, (train, val) in enumerate(kfolds, start=1):
+        folds_df[f"split_{i}"].loc[labels_df.iloc[train].index] = "train"
+        folds_df[f"split_{i}"].loc[labels_df.iloc[val].index] = "val"
+    return folds_df
+
+
+def get_data_folds():
+    labels = get_labels()
+    cls_idx, classes = get_class_labels()
+    labels_df, index = count_label_instances(labels, cls_idx)
+    kfolds, labels_df_with_counts, valid_labels_df = split_data(labels_df.copy())
+    folds_df = get_folds_df(kfolds, labels_df_with_counts.index, labels_df_with_counts)
+    return (
+        labels,
+        classes,
+        kfolds,
+        labels_df,
+        labels_df_with_counts,
+        cls_idx,
+        folds_df,
+        valid_labels_df,
+    )
 
 
 def main():
