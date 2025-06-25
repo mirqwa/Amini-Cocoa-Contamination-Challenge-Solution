@@ -6,6 +6,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+from PIL import Image, ExifTags
 from sklearn import model_selection
 
 
@@ -150,6 +152,40 @@ def create_yml_directories(folds_df, classes):
                 ds_y,
             )
     return images, save_path, ds_yamls
+
+
+def load_image(filepath):
+    image = Image.open(filepath)
+
+    for flag in ExifTags.TAGS.keys():
+        if ExifTags.TAGS[flag] == "Orientation":
+            break
+    orientation = flag
+    exif = image._getexif()
+    if not exif:
+        return image
+    orientation_value = exif.get(orientation, None)
+
+    if orientation_value == 3:
+        image = image.rotate(180, expand=True)
+    elif orientation_value == 6:
+        image = image.rotate(270, expand=True)
+    elif orientation_value == 8:
+        image = image.rotate(90, expand=True)
+    return image
+
+
+def copy_validation_data(images, labels, validation_df, save_path):
+    for image, label in zip(images, labels):
+        if image.stem not in validation_df.index:
+            continue
+        img_to_path = save_path / "validation" / "images"
+        lbl_to_path = save_path / "validation" / "labels"
+        img_to_path.mkdir(parents=True, exist_ok=True)
+        lbl_to_path.mkdir(parents=True, exist_ok=True)
+        img = load_image(image)
+        img.save(img_to_path / image.name)
+        shutil.copy(label, lbl_to_path / label.name)
 
 
 def main():
