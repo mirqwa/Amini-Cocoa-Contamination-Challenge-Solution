@@ -1,4 +1,5 @@
 import collections
+import datetime
 import shutil
 import yaml
 from pathlib import Path
@@ -114,6 +115,43 @@ def get_data_folds():
     )
 
 
+def create_yml_directories(folds_df, classes):
+    images = sorted(DATASETS_DIR.rglob("*images/train/*"))
+    sorted(images)
+
+    save_path = Path(
+        DATASETS_DIR / f"{datetime.date.today().isoformat()}_{SPLITS}-Fold_Cross-val"
+    )
+    save_path.mkdir(parents=True, exist_ok=True)
+
+    ds_yamls = []
+
+    for split in folds_df.columns:
+        # Create directories
+        split_dir = save_path / split
+        split_dir.mkdir(parents=True, exist_ok=True)
+        (split_dir / "train" / "images").mkdir(parents=True, exist_ok=True)
+        (split_dir / "train" / "labels").mkdir(parents=True, exist_ok=True)
+        (split_dir / "val" / "images").mkdir(parents=True, exist_ok=True)
+        (split_dir / "val" / "labels").mkdir(parents=True, exist_ok=True)
+
+        # Create dataset YAML files
+        dataset_yaml = split_dir / f"{split}_dataset.yaml"
+        ds_yamls.append(dataset_yaml)
+
+        with open(dataset_yaml, "w") as ds_y:
+            yaml.safe_dump(
+                {
+                    "path": str(split_dir.absolute()),
+                    "train": "train",
+                    "val": "val",
+                    "names": classes,
+                },
+                ds_y,
+            )
+    return images, save_path, ds_yamls
+
+
 def main():
     create_dataset_directories()
     (
@@ -126,7 +164,6 @@ def main():
         folds_df,
         valid_labels_df,
     ) = get_data_folds()
-    fold_lbl_distrb = get_class_distributions(kfolds, labels_df, cls_idx)
     images, save_path, ds_yamls = create_yml_directories(folds_df, classes)
     copy_validation_data(images, labels, valid_labels_df, save_path)
 
