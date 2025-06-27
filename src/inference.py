@@ -8,6 +8,51 @@ import pandas as pd
 from ultralytics import YOLO
 
 
+def bb_intersection_over_union(A, B) -> float:
+    xA = max(A[0], B[0])
+    yA = max(A[1], B[1])
+    xB = min(A[2], B[2])
+    yB = min(A[3], B[3])
+
+    # compute the area of intersection rectangle
+    interArea = max(0, xB - xA) * max(0, yB - yA)
+
+    if interArea == 0:
+        return 0.0
+
+    # compute the area of both the prediction and ground-truth rectangles
+    boxAArea = (A[2] - A[0]) * (A[3] - A[1])
+    boxBArea = (B[2] - B[0]) * (B[3] - B[1])
+
+    iou = interArea / float(boxAArea + boxBArea - interArea)
+    return iou
+
+
+def find_matching_box_from_boxes_list(
+    boxes_list,
+    weighted_classes,
+    new_box,
+    new_class,
+    match_iou,
+):
+    best_iou = match_iou
+    max_iou = 0
+    best_index = -1
+    for i in range(len(boxes_list)):
+        box = boxes_list[i]
+        iou = (
+            bb_intersection_over_union(box, new_box)
+            if weighted_classes[i] == new_class
+            else 0
+        )
+        max_iou = max(max_iou, iou)
+        if iou > best_iou:
+            best_index = i
+            best_iou = iou
+
+    return best_index, best_iou, max_iou
+
+
 def weighted_fussion(all_boxes, all_classes, all_confidences, iou_threshold):
     new_boxes = []
     new_classes = []
