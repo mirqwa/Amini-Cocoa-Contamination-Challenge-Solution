@@ -11,7 +11,6 @@ from ultralytics import YOLO
 
 
 IMAGE_SIZE = 640
-CLASS_MAX_DETECTION = {0: 10, 1: 10, 2: 20}
 
 
 def bb_intersection_over_union(A: typing.List[float], B: typing.List[float]) -> float:
