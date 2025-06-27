@@ -160,7 +160,9 @@ def do_prediction(
     max_detection,
     validation_df=pd.DataFrame(),
 ):
-    models, dataset_paths, image_files = get_models_and_dataset(models_project, images_paths, validation_df)
+    models, dataset_paths, image_files = get_models_and_dataset(
+        models_project, images_paths, validation_df
+    )
     all_data = []
     for image_file in tqdm(image_files):
         all_boxes = []
