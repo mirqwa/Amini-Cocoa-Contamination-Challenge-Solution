@@ -201,28 +201,9 @@ def do_prediction(
             names = results[0].names  # Class names dictionary
 
         if all_boxes:
-            boxes, classes, confidences, max_ious = weighted_fussion(
+            boxes, classes, confidences, _ = weighted_fussion(
                 all_boxes, all_classes, all_confidences, iou_threshold
             )
-            classes_confs = defaultdict(list)
-            confs = {0: 0, 1: 0, 2: 0}
-            for cls, conf in zip(classes, confidences):
-                confs[cls] = max(confs[cls], conf)
-                classes_confs[cls].append(conf)
-            classes_min_confs = {}
-            class_with_max_conf = 0
-            max_conf = 0
-            for cls, confs in classes_confs.items():
-                sorted_confs = sorted(confs, reverse=True)
-                cls_min_conf = (
-                    sorted_confs[CLASS_MAX_DETECTION[cls]]
-                    if len(sorted_confs) > CLASS_MAX_DETECTION[cls]
-                    else sorted_confs[-1]
-                )
-                classes_min_confs[cls] = cls_min_conf
-                if max(sorted_confs) > max_conf:
-                    max_conf = max(sorted_confs)
-                    class_with_max_conf = cls
 
             for box, cls, conf in zip(boxes, classes, confidences):
                 x1, y1, x2, y2 = box
@@ -263,7 +244,7 @@ if __name__ == "__main__":
     do_prediction(
         "runs/train/7fold/2025-05-07 01:14",
         ["data/dataset/images/test"],
-        "output/Submission150.csv",
+        "output/Submission151.csv",
         confidence=0.001,
         iou_threshold=0.5,
         max_detection=int(300),
