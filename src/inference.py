@@ -257,14 +257,3 @@ def do_prediction(
             )
     predictions = pd.DataFrame(all_data)
     predictions.to_csv(output_path, index=False)
-
-
-if __name__ == "__main__":
-    do_prediction(
-        "runs/train/7fold/2025-05-07 01:14",
-        ["data/dataset/images/test"],
-        "output/Submission151.csv",
-        confidence=0.001,
-        iou_threshold=0.5,
-        max_detection=int(300),
-    )
