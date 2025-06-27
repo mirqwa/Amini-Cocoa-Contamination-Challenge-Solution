@@ -3,6 +3,7 @@ from collections import defaultdict
 from pathlib import Path
 from tqdm import tqdm
 
+import numpy as np
 import pandas as pd
 
 from ultralytics import YOLO
@@ -51,6 +52,19 @@ def find_matching_box_from_boxes_list(
             best_iou = iou
 
     return best_index, best_iou, max_iou
+
+
+def get_weighted_box(boxes, scores):
+    box = np.zeros(4, dtype=np.float32)
+    conf = 0
+    conf_list = []
+    for b, s in zip(boxes, scores):
+        box += s * np.array(b)
+        conf += s
+        conf_list.append(s)
+    score = np.max(conf_list)
+    box = box / conf
+    return box, score
 
 
 def weighted_fussion(all_boxes, all_classes, all_confidences, iou_threshold):
