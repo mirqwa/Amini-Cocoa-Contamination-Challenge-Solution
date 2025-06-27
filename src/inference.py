@@ -160,8 +160,6 @@ def do_prediction(
             if image_file.split(".")[0] in validation_df.index
         ]
     )
-    # test_images = ["ID_iIZUc1.jpeg", "ID_DitJb1.jpeg", "ID_WU55ux.jpg", "ID_IClv1d.jpg", "ID_YIrpjW.jpg"]
-    # image_files = test_images
     for image_file in tqdm(image_files):
         all_boxes = []
         all_classes = []
@@ -202,9 +200,6 @@ def do_prediction(
             boxes, classes, confidences, max_ious = weighted_fussion(
                 all_boxes, all_classes, all_confidences, iou_threshold
             )
-            # boxes, classes, confidences = split_detections_by_conf(
-            #     boxes, classes, confidences, 0.2, 0.3
-            # )
             classes_confs = defaultdict(list)
             confs = {0: 0, 1: 0, 2: 0}
             for cls, conf in zip(classes, confidences):
@@ -224,11 +219,8 @@ def do_prediction(
                 if max(sorted_confs) > max_conf:
                     max_conf = max(sorted_confs)
                     class_with_max_conf = cls
-            class_with_most_votes = max(class_votes, key=class_votes.get)
 
             for box, cls, conf in zip(boxes, classes, confidences):
-                # if conf < classes_min_confs[cls]:
-                #     continue
                 x1, y1, x2, y2 = box
                 detected_class = names[
                     int(cls)
@@ -244,7 +236,6 @@ def do_prediction(
                         "xmin": x1,
                         "ymax": y2,
                         "xmax": x2,
-                        # "box_size": int((x2 - x1) * (y2 - y1))
                     }
                 )
         else:  # If no objects are detected
