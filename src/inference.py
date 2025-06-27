@@ -118,7 +118,6 @@ def get_models_and_dataset(models_project, images_paths, validation_df):
     model_paths = [
         model_path for model_path in Path(models_project).rglob("*/weights/best.pt")
     ]
-    # folds_map_df = pd.read_csv(f"{models_project}/fold_class_maps.csv")
     dataset_paths = []
     for model_path in model_paths:
         if len(images_paths) == 1:
@@ -151,6 +150,46 @@ def get_models_and_dataset(models_project, images_paths, validation_df):
     return models, dataset_paths, image_files
 
 
+def predict_for_image(
+    models, dataset_paths, image_file, confidence, iou_threshold, max_detection
+):
+    all_boxes = []
+    all_classes = []
+    all_confidences = []
+    model_detections = []
+    class_votes = defaultdict(int)
+    for model_and_path, dataset_path in zip(models, dataset_paths):
+        img_path = Path(f"{dataset_path}/{image_file}")
+        model = model_and_path[1]
+        results = model(
+            img_path,
+            imgsz=IMAGE_SIZE,
+            verbose=False,
+            conf=confidence,
+            iou=iou_threshold,
+            max_det=max_detection,
+        )
+        # Extract bounding boxes, confidence scores, and class labels
+        classes = (
+            results[0].boxes.cls.tolist() if results[0].boxes else []
+        )  # Class indices
+        all_classes.extend(classes)
+        for class_ in classes:
+            class_votes[int(class_)] += 1
+        boxes = (
+            results[0].boxes.xyxy.tolist() if results[0].boxes else []
+        )  # Bounding boxes in xyxy format
+        all_boxes.extend(boxes)
+        confidences = (
+            results[0].boxes.conf.tolist() if results[0].boxes else []
+        )  # Confidence scores
+        all_confidences.extend(confidences)
+        model_name = model_and_path[0].parent.parent.name
+        model_detections.extend([model_name] * len(boxes))
+        names = results[0].names  # Class names dictionary
+    return all_boxes, all_classes, all_confidences, names
+
+
 def do_prediction(
     models_project,
     images_paths,
@@ -165,40 +204,9 @@ def do_prediction(
     )
     all_data = []
     for image_file in tqdm(image_files):
-        all_boxes = []
-        all_classes = []
-        all_confidences = []
-        model_detections = []
-        class_votes = defaultdict(int)
-        for model_and_path, dataset_path in zip(models, dataset_paths):
-            img_path = Path(f"{dataset_path}/{image_file}")
-            model = model_and_path[1]
-            results = model(
-                img_path,
-                imgsz=IMAGE_SIZE,
-                verbose=False,
-                conf=confidence,
-                iou=iou_threshold,
-                max_det=max_detection,
-            )
-            # Extract bounding boxes, confidence scores, and class labels
-            classes = (
-                results[0].boxes.cls.tolist() if results[0].boxes else []
-            )  # Class indices
-            all_classes.extend(classes)
-            for class_ in classes:
-                class_votes[int(class_)] += 1
-            boxes = (
-                results[0].boxes.xyxy.tolist() if results[0].boxes else []
-            )  # Bounding boxes in xyxy format
-            all_boxes.extend(boxes)
-            confidences = (
-                results[0].boxes.conf.tolist() if results[0].boxes else []
-            )  # Confidence scores
-            all_confidences.extend(confidences)
-            model_name = model_and_path[0].parent.parent.name
-            model_detections.extend([model_name] * len(boxes))
-            names = results[0].names  # Class names dictionary
+        all_boxes, all_classes, all_confidences, names = predict_for_image(
+            models, dataset_paths, image_file, confidence, iou_threshold, max_detection
+        )
 
         if all_boxes:
             boxes, classes, confidences, _ = weighted_fussion(
@@ -233,7 +241,6 @@ def do_prediction(
                     "xmin": None,
                     "ymax": None,
                     "xmax": None,
-                    # "box_size": None
                 }
             )
     predictions = pd.DataFrame(all_data)
