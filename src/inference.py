@@ -72,7 +72,12 @@ def get_weighted_box(boxes, scores):
     return box, score
 
 
-def weighted_fussion(all_boxes, all_classes, all_confidences, iou_threshold):
+def weighted_fussion(
+    all_boxes: typing.List[list],
+    all_classes: typing.List[list],
+    all_confidences: typing.List[float],
+    iou_threshold: float,
+) -> float:
     new_boxes = []
     new_classes = []
     new_confidences = []
