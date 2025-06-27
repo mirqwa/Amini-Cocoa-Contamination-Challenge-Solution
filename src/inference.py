@@ -14,7 +14,7 @@ IMAGE_SIZE = 640
 CLASS_MAX_DETECTION = {0: 10, 1: 10, 2: 20}
 
 
-def bb_intersection_over_union(A, B) -> float:
+def bb_intersection_over_union(A: typing.List[float], B: typing.List[float]) -> float:
     xA = max(A[0], B[0])
     yA = max(A[1], B[1])
     xB = min(A[2], B[2])
@@ -35,12 +35,12 @@ def bb_intersection_over_union(A, B) -> float:
 
 
 def find_matching_box_from_boxes_list(
-    boxes_list,
-    weighted_classes,
-    new_box,
-    new_class,
-    match_iou,
-):
+    boxes_list: typing.List[list],
+    weighted_classes: typing.List[float],
+    new_box: typing.List[float],
+    new_class: float,
+    match_iou: float,
+) -> tuple:
     best_iou = match_iou
     max_iou = 0
     best_index = -1
@@ -59,7 +59,7 @@ def find_matching_box_from_boxes_list(
     return best_index, best_iou, max_iou
 
 
-def get_weighted_box(boxes, scores):
+def get_weighted_box(boxes: typing.List[list], scores: typing.List[float]) -> tuple:
     box = np.zeros(4, dtype=np.float32)
     conf = 0
     conf_list = []
