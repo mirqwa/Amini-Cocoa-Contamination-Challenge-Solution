@@ -1,4 +1,5 @@
 import os
+import typing
 from collections import defaultdict
 from pathlib import Path
 from tqdm import tqdm
@@ -191,14 +192,14 @@ def predict_for_image(
 
 
 def do_prediction(
-    models_project,
-    images_paths,
-    output_path,
-    confidence,
-    iou_threshold,
-    max_detection,
-    validation_df=pd.DataFrame(),
-):
+    models_project: str,
+    images_paths: typing.List[str],
+    output_path: str,
+    confidence: float,
+    iou_threshold: float,
+    max_detection: int,
+    validation_df: pd.DataFrame = pd.DataFrame(),
+) -> None:
     models, dataset_paths, image_files = get_models_and_dataset(
         models_project, images_paths, validation_df
     )
