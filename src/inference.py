@@ -9,6 +9,9 @@ import pandas as pd
 from ultralytics import YOLO
 
 
+CLASS_MAX_DETECTION = {0: 10, 1: 10, 2: 20}
+
+
 def bb_intersection_over_union(A, B) -> float:
     xA = max(A[0], B[0])
     yA = max(A[1], B[1])
