@@ -8,6 +8,47 @@ import pandas as pd
 from ultralytics import YOLO
 
 
+def weighted_fussion(all_boxes, all_classes, all_confidences, iou_threshold):
+    new_boxes = []
+    new_classes = []
+    new_confidences = []
+    weighted_classes = []
+    weighted_boxes = []
+    weighted_scores = []
+    max_ious = []
+
+    for i in range(len(all_boxes)):
+        conf = all_confidences[i]
+        index, best_iou, max_iou = find_matching_box_from_boxes_list(
+            weighted_boxes,
+            weighted_classes,
+            weighted_scores,
+            all_boxes[i],
+            all_classes[i],
+            all_confidences[i],
+            iou_threshold,
+        )
+        if index != -1:
+            new_boxes[index].append(all_boxes[i])
+            new_classes[index].append(all_classes[i])
+            new_confidences[index].append(all_confidences[i])
+            weighted_classes[index] = all_classes[i]
+            weighted_boxes[index], weighted_scores[index] = get_weighted_box(
+                new_boxes[index], new_confidences[index]
+            )
+            max_ious[index] = max_iou
+        else:
+            new_boxes.append([all_boxes[i]])
+            new_classes.append([all_classes[i]])
+            new_confidences.append([all_confidences[i]])
+            weighted_classes.append(all_classes[i])
+            weighted_boxes.append(all_boxes[i])
+            weighted_scores.append(all_confidences[i])
+            max_ious.append(max_iou)
+    weighted_boxes = [list(weighted_box) for weighted_box in weighted_boxes]
+    return weighted_boxes, weighted_classes, weighted_scores, max_ious
+
+
 IMAGE_SIZE = 640
 
 
