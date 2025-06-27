@@ -9,6 +9,7 @@ import pandas as pd
 from ultralytics import YOLO
 
 
+IMAGE_SIZE = 640
 CLASS_MAX_DETECTION = {0: 10, 1: 10, 2: 20}
 
 
@@ -84,10 +85,8 @@ def weighted_fussion(all_boxes, all_classes, all_confidences, iou_threshold):
         index, best_iou, max_iou = find_matching_box_from_boxes_list(
             weighted_boxes,
             weighted_classes,
-            weighted_scores,
             all_boxes[i],
             all_classes[i],
-            all_confidences[i],
             iou_threshold,
         )
         if index != -1:
@@ -109,9 +108,6 @@ def weighted_fussion(all_boxes, all_classes, all_confidences, iou_threshold):
             max_ious.append(max_iou)
     weighted_boxes = [list(weighted_box) for weighted_box in weighted_boxes]
     return weighted_boxes, weighted_classes, weighted_scores, max_ious
-
-
-IMAGE_SIZE = 640
 
 
 def do_prediction(
@@ -253,3 +249,14 @@ def do_prediction(
             )
     predictions = pd.DataFrame(all_data)
     predictions.to_csv(output_path, index=False)
+
+
+if __name__ == "__main__":
+    do_prediction(
+        "runs/train/7fold/2025-05-07 01:14",
+        ["data/dataset/images/test"],
+        "output/Submission150.csv",
+        confidence=0.001,
+        iou_threshold=0.5,
+        max_detection=int(300),
+    )
