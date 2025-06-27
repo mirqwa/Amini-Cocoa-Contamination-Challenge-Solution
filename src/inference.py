@@ -110,15 +110,7 @@ def weighted_fussion(all_boxes, all_classes, all_confidences, iou_threshold):
     return weighted_boxes, weighted_classes, weighted_scores, max_ious
 
 
-def do_prediction(
-    models_project,
-    images_paths,
-    output_path,
-    confidence,
-    iou_threshold,
-    max_detection,
-    validation_df=pd.DataFrame(),
-):
+def get_models_and_dataset(models_project, images_paths, validation_df):
     models = [
         (model_path, YOLO(model_path))
         for model_path in Path(models_project).rglob("*/weights/best.pt")
@@ -146,7 +138,6 @@ def do_prediction(
     for images_path in images_paths:
         image_files.extend(os.listdir(images_path))
     image_files = list(set(image_files))
-    all_data = []
     image_files = (
         image_files
         if validation_df.empty
@@ -156,6 +147,21 @@ def do_prediction(
             if image_file.split(".")[0] in validation_df.index
         ]
     )
+
+    return models, dataset_paths, image_files
+
+
+def do_prediction(
+    models_project,
+    images_paths,
+    output_path,
+    confidence,
+    iou_threshold,
+    max_detection,
+    validation_df=pd.DataFrame(),
+):
+    models, dataset_paths, image_files = get_models_and_dataset(models_project, images_paths, validation_df)
+    all_data = []
     for image_file in tqdm(image_files):
         all_boxes = []
         all_classes = []
