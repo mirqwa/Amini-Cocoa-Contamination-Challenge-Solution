@@ -111,7 +111,9 @@ def weighted_fussion(all_boxes, all_classes, all_confidences, iou_threshold):
     return weighted_boxes, weighted_classes, weighted_scores, max_ious
 
 
-def get_models_and_dataset(models_project, images_paths, validation_df):
+def get_models_and_dataset(
+    models_project: str, images_paths: typing.List[str], validation_df: pd.DataFrame
+) -> tuple:
     models = [
         (model_path, YOLO(model_path))
         for model_path in Path(models_project).rglob("*/weights/best.pt")
@@ -152,8 +154,13 @@ def get_models_and_dataset(models_project, images_paths, validation_df):
 
 
 def predict_for_image(
-    models, dataset_paths, image_file, confidence, iou_threshold, max_detection
-):
+    models: typing.List[tuple],
+    dataset_paths: typing.List[str],
+    image_file: str,
+    confidence: float,
+    iou_threshold: float,
+    max_detection: int,
+) -> typing.Tuple[list]:
     all_boxes = []
     all_classes = []
     all_confidences = []
