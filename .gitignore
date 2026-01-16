@@ -1,0 +1,11 @@
+data/dataset.zip
+data/dataset_cross_validation/*
+data/Test.csv
+data/Train.csv
+notebooks/.ipynb_checkpoints/*
+src/__pycache__/*
+runs/*
+yolo11n.pt
+yolo11s.pt
+data/dataset/*
+output/*
